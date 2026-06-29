@@ -1111,14 +1111,21 @@ if st.session_state.search_results:
                 elif field == 'initial_price':
                     row_data[display_name] = format_price(float(value or 0), current_country_code)
                 elif field == 'discount_pct':
-                    row_data[display_name] = f"{float(value or 0):.1f}%" if value else "0%"
-                elif field == 'rating':
-                    row_data[display_name] = f"{float(value or 0):.1f}/5"
-                elif field == 'num_ratings':
-                    row_data[display_name] = f"{int(value or 0):,}"
-                elif field == 'value_score':
-                    row_data[display_name] = f"{float(value or 0):.2f}" if value else "0.00"
-                elif field == 'units_past_month':
+               elif field == 'discount_pct':
+            clean_discount = 0 if value != value or value is None else float(value)
+            row_data[display_name] = f"{clean_discount:.1f}%" if clean_discount > 0 else "0%"
+            
+        elif field == 'rating':
+            clean_rating = 0.0 if value != value or value is None else float(value)
+            row_data[display_name] = f"{clean_rating:.1f}/5"
+            
+        elif field == 'num_ratings':
+            clean_num = 0 if value != value or value is None else int(value)
+            row_data[display_name] = f"{clean_num:,}"
+            
+        elif field == 'value_score':
+            clean_score = 0.0 if value != value or value is None else float(value)
+            row_data[display_name] = f"{clean_score:.2f}"                elif field == 'units_past_month':
                     row_data[display_name] = f"{int(value) if value == value and value else 0:,}"
                 elif field == 'position':
                     row_data[display_name] = f"#{int(value) if value == value and value else 0}" if value else "N/A"
