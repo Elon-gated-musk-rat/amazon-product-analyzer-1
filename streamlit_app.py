@@ -478,7 +478,18 @@ if st.session_state.search_results:
         st.metric("🎯 Products Found", len(results), delta=None)
     
     with col2:
-        prices = [p['final_price'] for p in results if p.get('final_price') is not None]
+        import re
+        raw_prices = [p['final_price'] for p in results if p.get('final_price') is not None]
+        prices = []
+        for p in raw_prices:
+            try:
+                # Strip out everything except numbers and decimals
+                clean_val = re.sub(r'[^\d.]', '', str(p))
+                if clean_val:
+                    prices.append(float(clean_val))
+            except (ValueError, TypeError):
+                continue
+                
         avg_price = np.mean(prices) if prices else 0
         current_country_code = countries.get(st.session_state.get('selected_country'), list(countries.values())[0])
         st.metric("💰 Average Price", format_price(avg_price, current_country_code), delta=None)
@@ -1108,9 +1119,9 @@ if st.session_state.search_results:
                 elif field == 'value_score':
                     row_data[display_name] = f"{float(value or 0):.2f}" if value else "0.00"
                 elif field == 'units_past_month':
-                    row_data[display_name] = f"{int(value or 0):,}"
+                    row_data[display_name] = f"{int(value) if value == value and value else 0:,}"
                 elif field == 'position':
-                    row_data[display_name] = f"#{int(value or 0)}" if value else "N/A"
+                    row_data[display_name] = f"#{int(value) if value == value and value else 0}" if value else "N/A"
                 elif field == 'badges':
                     if isinstance(value, list) and value:
                         badges_text = ', '.join(value[:2])  # Show max 2 badges
