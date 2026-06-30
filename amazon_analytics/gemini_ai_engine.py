@@ -32,7 +32,7 @@ class GeminiAIEngine(AIEngineInterface):
     def _init_gemini(self):
         """Initialize Gemini AI with model switching."""
         try:
-            # Fallback chain to find your secret regardless of how it's named
+            # Flexible secret resolution fallback chain
             target_key = None
             if "GEMINI_API_KEY" in st.secrets:
                 target_key = st.secrets["GEMINI_API_KEY"]
@@ -44,35 +44,34 @@ class GeminiAIEngine(AIEngineInterface):
             if target_key:
                 self.client = genai.Client(api_key=target_key)
             else:
-                # Fall back to native environment variables if not in st.secrets
                 self.client = genai.Client()
                 
-        except Exception as e:
-            self.logger.error(f"❌ Gemini API Key Error: {e}")
-            self.client = None
+            self.model_hierarchy = [
+                {
+                    'name': 'gemini-2.5-flash',
+                    'display': 'Gemini 2.5 Flash', 
+                    'description': 'Primary - Best price-performance, optimized for high volume',
+                    'priority': 1
+                },
+                {
+                    'name': 'gemini-2.5-pro', 
+                    'display': 'Gemini 2.5 Pro',
+                    'description': 'Advanced reasoning, complex problem solving',
+                    'priority': 2
+                },
+                {
+                    'name': 'gemini-2.0-flash-001',
+                    'display': 'Gemini 2.0 Flash', 
+                    'description': 'Stable GA version, reliable backup',
+                    'priority': 3
+                }
+            ]
             
-        self.model_hierarchy = [
-            {
-                'name': 'gemini-2.5-flash',
-                'display': 'Gemini 2.5 Flash', 
-                'description': 'Primary - Best price-performance, optimized for high volume',
-                'priority': 1
-            },
-            {
-                'name': 'gemini-2.5-pro', 
-                'display': 'Gemini 2.5 Pro',
-                'description': 'Advanced reasoning, complex problem solving',
-                'priority': 2
-            },
-            {
-                'name': 'gemini-2.0-flash-001',
-                'display': 'Gemini 2.0 Flash', 
-                'description': 'Stable GA version, reliable backup',
-                'priority': 3
-            }
-        ]
-        
-        self._try_initialize_model(0)
+            self._try_initialize_model(0)
+            
+        except Exception as e:
+            self.logger.error(f"Failed to initialize Gemini: {e}")
+            self.gemini_available = False
     
     def _try_initialize_model(self, model_index=0):
         """Try to initialize a specific model from hierarchy"""
@@ -310,8 +309,8 @@ class GeminiAIEngine(AIEngineInterface):
             if col in df.columns:
                 df[col] = df[col].fillna(False)
         
-        return df
-    
+        return df solution
+
     def _create_anti_hallucination_prompt(self, user_query: str, df: pd.DataFrame) -> str:
         """Create hallucination-proof prompt with all data."""
         products_data = []
