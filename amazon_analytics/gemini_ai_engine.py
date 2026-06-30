@@ -32,39 +32,47 @@ class GeminiAIEngine(AIEngineInterface):
     def _init_gemini(self):
         """Initialize Gemini AI with model switching."""
         try:
-            try:
-                # Let the SDK automatically read GEMINI_API_KEY from environment/secrets
-                self.client = genai.Client()
-            except Exception as e:
-                self.logger.error(f"❌ Gemini API Key Error: {e}")
-                self.client = None
+            # Fallback chain to find your secret regardless of how it's named
+            target_key = None
+            if "GEMINI_API_KEY" in st.secrets:
+                target_key = st.secrets["GEMINI_API_KEY"]
+            elif "api_key" in st.secrets:
+                target_key = st.secrets["api_key"]
+            elif "GOOGLE_API_KEY" in st.secrets:
+                target_key = st.secrets["GOOGLE_API_KEY"]
                 
-            self.model_hierarchy = [
-                {
-                    'name': 'gemini-2.5-flash',
-                    'display': 'Gemini 2.5 Flash', 
-                    'description': 'Primary - Best price-performance, optimized for high volume',
-                    'priority': 1
-                },
-                {
-                    'name': 'gemini-2.5-pro', 
-                    'display': 'Gemini 2.5 Pro',
-                    'description': 'Advanced reasoning, complex problem solving',
-                    'priority': 2
-                },
-                {
-                    'name': 'gemini-2.0-flash-001',
-                    'display': 'Gemini 2.0 Flash', 
-                    'description': 'Stable GA version, reliable backup',
-                    'priority': 3
-                }
-            ]
-            
-            self._try_initialize_model(0)
-            
+            if target_key:
+                self.client = genai.Client(api_key=target_key)
+            else:
+                # Fall back to native environment variables if not in st.secrets
+                self.client = genai.Client()
+                
         except Exception as e:
-            self.logger.error(f"Failed to initialize Gemini: {e}")
-            self.gemini_available = False
+            self.logger.error(f"❌ Gemini API Key Error: {e}")
+            self.client = None
+            
+        self.model_hierarchy = [
+            {
+                'name': 'gemini-2.5-flash',
+                'display': 'Gemini 2.5 Flash', 
+                'description': 'Primary - Best price-performance, optimized for high volume',
+                'priority': 1
+            },
+            {
+                'name': 'gemini-2.5-pro', 
+                'display': 'Gemini 2.5 Pro',
+                'description': 'Advanced reasoning, complex problem solving',
+                'priority': 2
+            },
+            {
+                'name': 'gemini-2.0-flash-001',
+                'display': 'Gemini 2.0 Flash', 
+                'description': 'Stable GA version, reliable backup',
+                'priority': 3
+            }
+        ]
+        
+        self._try_initialize_model(0)
     
     def _try_initialize_model(self, model_index=0):
         """Try to initialize a specific model from hierarchy"""
