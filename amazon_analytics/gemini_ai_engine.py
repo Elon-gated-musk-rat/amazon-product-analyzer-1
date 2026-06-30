@@ -32,12 +32,12 @@ class GeminiAIEngine(AIEngineInterface):
     def _init_gemini(self):
         """Initialize Gemini AI with model switching."""
         try:
-            # Flexible secret resolution fallback chain
+            # Fallback chain to check for both api_key and GEMINI_API_KEY formats
             target_key = None
-            if "GEMINI_API_KEY" in st.secrets:
-                target_key = st.secrets["GEMINI_API_KEY"]
-            elif "api_key" in st.secrets:
+            if "api_key" in st.secrets:
                 target_key = st.secrets["api_key"]
+            elif "GEMINI_API_KEY" in st.secrets:
+                target_key = st.secrets["GEMINI_API_KEY"]
             elif "GOOGLE_API_KEY" in st.secrets:
                 target_key = st.secrets["GOOGLE_API_KEY"]
                 
@@ -309,8 +309,8 @@ class GeminiAIEngine(AIEngineInterface):
             if col in df.columns:
                 df[col] = df[col].fillna(False)
         
-        return df solution
-
+        return df
+    
     def _create_anti_hallucination_prompt(self, user_query: str, df: pd.DataFrame) -> str:
         """Create hallucination-proof prompt with all data."""
         products_data = []
@@ -405,9 +405,4 @@ Use your reasoning to analyze this data and provide helpful, accurate insights. 
             return True, []
             
         except Exception as e:
-            return False, [f"Validation error: {str(e)}"]
-
-
-def get_gemini_ai() -> GeminiAIEngine:
-    """Factory function to create GeminiAIEngine instance"""
-    return GeminiAIEngine()
+            return False,
