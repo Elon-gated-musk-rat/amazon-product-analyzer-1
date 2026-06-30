@@ -33,7 +33,8 @@ class GeminiAIEngine(AIEngineInterface):
         """Initialize Gemini AI with model switching."""
         try:
             try:
-                self.client = genai.Client(api_key=st.secrets["api_key"])
+                # Let the SDK automatically read GEMINI_API_KEY from environment/secrets
+                self.client = genai.Client()
             except Exception as e:
                 self.logger.error(f"❌ Gemini API Key Error: {e}")
                 self.client = None
