@@ -1095,30 +1095,23 @@ if st.session_state.search_results:
                 # Format each field type appropriately
                 if field == 'name':
                     row_data[display_name] = str(value or 'N/A')[:60] + ('...' if len(str(value or '')) > 60 else '')  # 60 chars prevent table overflow
-                elif field == 'final_price':
-                    row_data[display_name] = format_price(float(value or 0), current_country_code)
+               elif field == 'final_price':
+                    row_data[display_name] = format_price(float(value) if value == value and value else 0.0, current_country_code)
                 elif field == 'initial_price':
-                    row_data[display_name] = format_price(float(value or 0), current_country_code)
+                    row_data[display_name] = format_price(float(value) if value == value and value else 0.0, current_country_code)
                 elif field == 'discount_pct':
-                    clean_discount = 0 if value != value or value is None else float(value)
-                    row_data[display_name] = f"{clean_discount:.1f}%" if clean_discount > 0 else "0%"
+                    row_data[display_name] = f"{float(value):.1f}%" if value == value and value else "0%"
                 elif field == 'rating':
-                    clean_rating = 0.0 if value != value or value is None else float(value)
-                    row_data[display_name] = f"{clean_rating:.1f}/5"
+                    row_data[display_name] = f"{float(value):.1f}/5" if value == value and value else "0.0/5"
                 elif field == 'num_ratings':
-                    clean_num = 0 if value != value or value is None else int(value)
-                    row_data[display_name] = f"{clean_num:,}"
+                    row_data[display_name] = f"{int(value):,}" if value == value and value else "0"
                 elif field == 'value_score':
-                    clean_score = 0.0 if value != value or value is None else float(value)
-                    row_data[display_name] = f"{clean_score:.2f}"
+                    row_data[display_name] = f"{float(value):.2f}" if value == value and value else "0.00"
                 elif field == 'units_past_month':
-                    clean_units = 0 if value != value or value is None else int(value)
-                    row_data[display_name] = f"{clean_units:,}"
+                    row_data[display_name] = f"{int(value):,}" if value == value and value else "0"
                 elif field == 'position':
-                    clean_pos = 0 if value != value or value is None else int(value)
-                    row_data[display_name] = f"#{clean_pos}" if clean_pos > 0 else "N/A"
-                elif field == 'badges':
-                    if isinstance(value, list) and value:
+                    row_data[display_name] = f"#{int(value)}" if value == value and value else "N/A"
+                elif field == 'badges':                    if isinstance(value, list) and value:
                         badges_text = ', '.join(value[:2])  # Show max 2 badges
                         row_data[display_name] = badges_text[:30] + ('...' if len(badges_text) > 30 else '')
                     else:
