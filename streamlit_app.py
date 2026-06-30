@@ -478,7 +478,10 @@ if st.session_state.search_results:
         st.metric("🎯 Products Found", len(results), delta=None)
     
     with col2:
-        prices = [p['final_price'] for p in results if p.get('final_price') is not None]
+        prices = [
+            p['final_price'] for p in results
+            if isinstance(p.get('final_price'), (int, float)) and not math.isnan(p.get('final_price'))
+        ]
         avg_price = np.mean(prices) if prices else 0
         current_country_code = countries.get(st.session_state.get('selected_country'), list(countries.values())[0])
         st.metric("💰 Average Price", format_price(avg_price, current_country_code), delta=None)
@@ -1093,25 +1096,29 @@ if st.session_state.search_results:
                 value = product.get(field)
                 
                 # Format each field type appropriately
+                # Helper: True when value is a usable (non-null, non-NaN) number
+                is_valid_number = isinstance(value, (int, float)) and not (isinstance(value, float) and math.isnan(value))
+
                 if field == 'name':
                     row_data[display_name] = str(value or 'N/A')[:60] + ('...' if len(str(value or '')) > 60 else '')  # 60 chars prevent table overflow
-               elif field == 'final_price':
-                    row_data[display_name] = format_price(float(value) if value == value and value else 0.0, current_country_code)
+                elif field == 'final_price':
+                    row_data[display_name] = format_price(float(value) if is_valid_number else 0.0, current_country_code)
                 elif field == 'initial_price':
-                    row_data[display_name] = format_price(float(value) if value == value and value else 0.0, current_country_code)
+                    row_data[display_name] = format_price(float(value) if is_valid_number else 0.0, current_country_code)
                 elif field == 'discount_pct':
-                    row_data[display_name] = f"{float(value):.1f}%" if value == value and value else "0%"
+                    row_data[display_name] = f"{float(value):.1f}%" if is_valid_number else "0%"
                 elif field == 'rating':
-                    row_data[display_name] = f"{float(value):.1f}/5" if value == value and value else "0.0/5"
+                    row_data[display_name] = f"{float(value):.1f}/5" if is_valid_number else "0.0/5"
                 elif field == 'num_ratings':
-                    row_data[display_name] = f"{int(value):,}" if value == value and value else "0"
+                    row_data[display_name] = f"{int(value):,}" if is_valid_number else "0"
                 elif field == 'value_score':
-                    row_data[display_name] = f"{float(value):.2f}" if value == value and value else "0.00"
+                    row_data[display_name] = f"{float(value):.2f}" if is_valid_number else "0.00"
                 elif field == 'units_past_month':
-                    row_data[display_name] = f"{int(value):,}" if value == value and value else "0"
+                    row_data[display_name] = f"{int(value):,}" if is_valid_number else "0"
                 elif field == 'position':
-                    row_data[display_name] = f"#{int(value)}" if value == value and value else "N/A"
-                elif field == 'badges':                    if isinstance(value, list) and value:
+                    row_data[display_name] = f"#{int(value)}" if is_valid_number else "N/A"
+                elif field == 'badges':
+                    if isinstance(value, list) and value:
                         badges_text = ', '.join(value[:2])  # Show max 2 badges
                         row_data[display_name] = badges_text[:30] + ('...' if len(badges_text) > 30 else '')
                     else:
