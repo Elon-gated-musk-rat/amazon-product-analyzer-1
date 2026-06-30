@@ -59,7 +59,7 @@ class GeminiAIEngine(AIEngineInterface):
                 }
             ]
             
-            self._try_initialize_model(0)
+    self._try_initialize_model(0)
             
         except Exception as e:
             self.logger.error(f"Failed to initialize Gemini: {e}")
