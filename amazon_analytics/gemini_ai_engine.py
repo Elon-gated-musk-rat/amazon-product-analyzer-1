@@ -58,9 +58,9 @@ class GeminiAIEngine(AIEngineInterface):
                     'priority': 3
                 }
             ]
-                
+            
             self._try_initialize_model(0)
-                
+            
         except Exception as e:
             self.logger.error(f"Failed to initialize Gemini: {e}")
             self.gemini_available = False
@@ -141,7 +141,6 @@ class GeminiAIEngine(AIEngineInterface):
                             self.logger.warning(f"🔄 Rate limit exceeded on {model_config['display']}, switching model...")
                             break
                     
-                    # Content filtering requires immediate model switch, no retry logic
                     elif any(term in error_str for term in ['safety', 'blocked', 'filtered']):
                         self.logger.warning(f"🛡️ Content filtered by {model_config['display']}: {e}")
                         break
@@ -298,3 +297,109 @@ class GeminiAIEngine(AIEngineInterface):
                 df[col] = df[col].astype(str).fillna('')
         
         bool_cols = ['sponsored', 'is_prime', 'is_deal']
+        for col in bool_cols:
+            if col in df.columns:
+                df[col] = df[col].fillna(False)
+        
+        return df
+    
+    def _create_anti_hallucination_prompt(self, user_query: str, df: pd.DataFrame) -> str:
+        """Create hallucination-proof prompt with all data."""
+        products_data = []
+        for _, row in df.iterrows():
+            product = {
+                'name': str(row.get('name', 'N/A')),
+                'asin': str(row.get('asin', 'N/A')),
+                'url': str(row.get('url', 'N/A')),
+                'brand': str(row.get('brand', 'N/A')),
+                'badge': str(row.get('badge', 'N/A')),
+                'final_price': float(row.get('final_price', 0)) if pd.notna(row.get('final_price')) else 0,
+                'initial_price': float(row.get('initial_price', 0)) if pd.notna(row.get('initial_price')) else 0,
+                'currency': str(row.get('currency', 'USD')),
+                'discount_pct': float(row.get('discount_pct', 0)) if pd.notna(row.get('discount_pct')) else 0,
+                'rating': float(row.get('rating', 0)) if pd.notna(row.get('rating')) else 0,
+                'num_ratings': int(row.get('num_ratings', 0)) if pd.notna(row.get('num_ratings')) else 0,
+                'sold': int(row.get('sold', 0)) if pd.notna(row.get('sold')) else 0,
+                'bought_past_month': int(row.get('bought_past_month', 0)) if pd.notna(row.get('bought_past_month')) else 0,
+                'is_prime': bool(row.get('is_prime', False)),
+                'is_coupon': bool(row.get('is_coupon', False)),
+                'is_subscribe_and_save': bool(row.get('is_subscribe_and_save', False)),
+                'sponsored': bool(row.get('sponsored', False)),
+                'delivery': str(row.get('delivery', 'N/A')),
+                'rank_on_page': int(row.get('rank_on_page', 0)) if pd.notna(row.get('rank_on_page')) else 0,
+                'page_number': int(row.get('page_number', 1)) if pd.notna(row.get('page_number')) else 1,
+                'variations': str(row.get('variations', 'N/A')),
+                'image': str(row.get('image', 'N/A')),
+                'business_type': str(row.get('business_type', 'N/A'))
+            }
+            products_data.append(product)
+        
+        product_data_json = json.dumps(products_data, indent=2)
+        
+        return f"""You are an expert Amazon product analyst with advanced reasoning capabilities. Analyze the provided product data and answer user questions with intelligent insights.
+
+🚨 ZERO HALLUCINATION RULES:
+1. NEVER make up or invent ANY product information
+2. ONLY use data explicitly provided below
+3. If information is missing, clearly state "This information is not available"
+4. Always cite specific product ASINs for verification
+5. Use your reasoning to provide valuable insights based on the actual data
+
+🧠 REASONING CAPABILITIES:
+- Compare products by analyzing price, ratings, reviews, and features
+- Identify best value products by considering price vs rating relationship  
+- Assess product trust by evaluating rating quality and review volume
+- Detect deals by comparing initial_price vs final_price
+- Analyze shipping advantages (Prime vs non-Prime)
+- Provide personalized recommendations based on specific criteria
+
+USER QUERY: {user_query}
+
+AVAILABLE PRODUCT DATA ({len(df)} products):
+{product_data_json}
+
+AVAILABLE FIELDS: name, asin, url, brand, badge, final_price, initial_price, currency, discount_pct, rating, num_ratings, sold, bought_past_month, is_prime, is_coupon, is_subscribe_and_save, sponsored, delivery, rank_on_page, page_number, variations, image, business_type
+
+Use your reasoning to analyze this data and provide helpful, accurate insights. Include specific ASINs and numbers for verification.
+"""
+    
+    def _create_error_response(self, question: str, error_msg: str, start_time: datetime) -> AIResponse:
+        """Create standardized error response"""
+        execution_time = (datetime.now() - start_time).total_seconds()
+        
+        return AIResponse(
+            success=False,
+            query=question,
+            response=f"I couldn't analyze your data: {error_msg}",
+            confidence=0.0,
+            execution_time=execution_time,
+            timestamp=datetime.now(),
+            products_analyzed=0,
+            data_source="error",
+            verification_passed=False,
+            fact_check_score=0.0,
+            computed_facts={},
+            reasoning_chain=[f"Error: {error_msg}"],
+            analysis_method="error",
+            metadata={}
+        )
+    
+    def validate_data_consistency(self, run_id: Optional[str] = None) -> Tuple[bool, List[str]]:
+        """Validate data consistency for the given run_id"""
+        try:
+            if not run_id:
+                return False, ["No run_id provided"]
+                
+            df = self._load_run_data(run_id)
+            if df is None or len(df) == 0:
+                return False, [f"No data found for run_id: {run_id}"]
+                
+            return True, []
+            
+        except Exception as e:
+            return False, [f"Validation error: {str(e)}"]
+
+
+def get_gemini_ai() -> GeminiAIEngine:
+    """Factory function to create GeminiAIEngine instance"""
+    return GeminiAIEngine()
