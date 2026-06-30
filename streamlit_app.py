@@ -478,18 +478,7 @@ if st.session_state.search_results:
         st.metric("🎯 Products Found", len(results), delta=None)
     
     with col2:
-        import re
-        raw_prices = [p['final_price'] for p in results if p.get('final_price') is not None]
-        prices = []
-        for p in raw_prices:
-            try:
-                # Strip out everything except numbers and decimals
-                clean_val = re.sub(r'[^\d.]', '', str(p))
-                if clean_val:
-                    prices.append(float(clean_val))
-            except (ValueError, TypeError):
-                continue
-                
+        prices = [p['final_price'] for p in results if p.get('final_price') is not None]
         avg_price = np.mean(prices) if prices else 0
         current_country_code = countries.get(st.session_state.get('selected_country'), list(countries.values())[0])
         st.metric("💰 Average Price", format_price(avg_price, current_country_code), delta=None)
@@ -1111,24 +1100,23 @@ if st.session_state.search_results:
                 elif field == 'initial_price':
                     row_data[display_name] = format_price(float(value or 0), current_country_code)
                 elif field == 'discount_pct':
-               elif field == 'discount_pct':
-            clean_discount = 0 if value != value or value is None else float(value)
-            row_data[display_name] = f"{clean_discount:.1f}%" if clean_discount > 0 else "0%"
-            
-        elif field == 'rating':
-            clean_rating = 0.0 if value != value or value is None else float(value)
-            row_data[display_name] = f"{clean_rating:.1f}/5"
-            
-        elif field == 'num_ratings':
-            clean_num = 0 if value != value or value is None else int(value)
-            row_data[display_name] = f"{clean_num:,}"
-            
-        elif field == 'value_score':
-            clean_score = 0.0 if value != value or value is None else float(value)
-            row_data[display_name] = f"{clean_score:.2f}"                elif field == 'units_past_month':
-                    row_data[display_name] = f"{int(value) if value == value and value else 0:,}"
+                    clean_discount = 0 if value != value or value is None else float(value)
+                    row_data[display_name] = f"{clean_discount:.1f}%" if clean_discount > 0 else "0%"
+                elif field == 'rating':
+                    clean_rating = 0.0 if value != value or value is None else float(value)
+                    row_data[display_name] = f"{clean_rating:.1f}/5"
+                elif field == 'num_ratings':
+                    clean_num = 0 if value != value or value is None else int(value)
+                    row_data[display_name] = f"{clean_num:,}"
+                elif field == 'value_score':
+                    clean_score = 0.0 if value != value or value is None else float(value)
+                    row_data[display_name] = f"{clean_score:.2f}"
+                elif field == 'units_past_month':
+                    clean_units = 0 if value != value or value is None else int(value)
+                    row_data[display_name] = f"{clean_units:,}"
                 elif field == 'position':
-                    row_data[display_name] = f"#{int(value) if value == value and value else 0}" if value else "N/A"
+                    clean_pos = 0 if value != value or value is None else int(value)
+                    row_data[display_name] = f"#{clean_pos}" if clean_pos > 0 else "N/A"
                 elif field == 'badges':
                     if isinstance(value, list) and value:
                         badges_text = ', '.join(value[:2])  # Show max 2 badges
