@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Gemini AI engine with anti-hallucination prompts for product analysis."""
 
+import streamlit as st
 import pandas as pd
 import json
 import logging
@@ -31,10 +32,10 @@ class GeminiAIEngine(AIEngineInterface):
     
     def _init_gemini(self):
         """Initialize Gemini AI with model switching."""
-try:
+        try:
             self.client = genai.Client(api_key=st.secrets["api_key"])
         except Exception as e:
-            logger.error(f"❌ Gemini API Key Error: {e}")
+            self.logger.error(f"❌ Gemini API Key Error: {e}")
             self.client = None
             
             self.model_hierarchy = [
