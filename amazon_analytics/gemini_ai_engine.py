@@ -405,4 +405,9 @@ Use your reasoning to analyze this data and provide helpful, accurate insights. 
             return True, []
             
         except Exception as e:
-            return False,
+            return False, [f"Validation error: {str(e)}"]
+
+
+def get_gemini_ai() -> GeminiAIEngine:
+    """Factory function to create GeminiAIEngine instance"""
+    return GeminiAIEngine()
