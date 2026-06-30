@@ -38,7 +38,7 @@ class GeminiAIEngine(AIEngineInterface):
             self.logger.error(f"❌ Gemini API Key Error: {e}")
             self.client = None
             
-            self.model_hierarchy = [
+        self.model_hierarchy = [
                 {
                     'name': 'gemini-2.5-flash',
                     'display': 'Gemini 2.5 Flash', 
