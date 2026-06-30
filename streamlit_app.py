@@ -259,6 +259,10 @@ def format_price(amount, country_code):
     """
     currency_code = currencies.get(country_code, "USD")
     symbol = currency_symbols.get(currency_code, "$")
+
+    # Safety net: never let NaN/inf or bad types leak through to the UI as "$nan"
+    if not isinstance(amount, (int, float)) or not math.isfinite(amount):
+        amount = 0.0
     
     # Localized currency display with regional formatting conventions
     if currency_code == "JPY":
@@ -480,7 +484,7 @@ if st.session_state.search_results:
     with col2:
         prices = [
             p['final_price'] for p in results
-            if isinstance(p.get('final_price'), (int, float)) and not math.isnan(p.get('final_price'))
+            if isinstance(p.get('final_price'), (int, float)) and math.isfinite(p.get('final_price'))
         ]
         avg_price = np.mean(prices) if prices else 0
         current_country_code = countries.get(st.session_state.get('selected_country'), list(countries.values())[0])
