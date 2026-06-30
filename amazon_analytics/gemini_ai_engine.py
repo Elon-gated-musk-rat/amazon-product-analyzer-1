@@ -35,7 +35,7 @@ class GeminiAIEngine(AIEngineInterface):
             if not GOOGLE_API_KEY:
                 raise Exception("GOOGLE_API_KEY not set")
                 
-            self.client = genai.Client(api_key=GOOGLE_API_KEY)
+        self.client = genai.Client(api_key=st.secrets["api_key"])
             
             self.model_hierarchy = [
                 {
