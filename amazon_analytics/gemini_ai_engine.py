@@ -32,19 +32,11 @@ class GeminiAIEngine(AIEngineInterface):
     def _init_gemini(self):
         """Initialize Gemini AI with model switching."""
         try:
-            # Fallback chain to check for both api_key and GEMINI_API_KEY formats
-            target_key = None
-            if "api_key" in st.secrets:
-                target_key = st.secrets["api_key"]
-            elif "GEMINI_API_KEY" in st.secrets:
-                target_key = st.secrets["GEMINI_API_KEY"]
-            elif "GOOGLE_API_KEY" in st.secrets:
-                target_key = st.secrets["GOOGLE_API_KEY"]
-                
-            if target_key:
-                self.client = genai.Client(api_key=target_key)
-            else:
-                self.client = genai.Client()
+            try:
+                self.client = genai.Client(api_key=st.secrets["api_key"])
+            except Exception as e:
+                self.logger.error(f"❌ Gemini API Key Error: {e}")
+                self.client = None
                 
             self.model_hierarchy = [
                 {
