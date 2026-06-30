@@ -31,11 +31,11 @@ class GeminiAIEngine(AIEngineInterface):
     
     def _init_gemini(self):
         """Initialize Gemini AI with model switching."""
-        try:
-            if not GOOGLE_API_KEY:
-                raise Exception("GOOGLE_API_KEY not set")
-                
-        self.client = genai.Client(api_key=st.secrets["api_key"])
+try:
+            self.client = genai.Client(api_key=st.secrets["api_key"])
+        except Exception as e:
+            logger.error(f"❌ Gemini API Key Error: {e}")
+            self.client = None
             
             self.model_hierarchy = [
                 {
